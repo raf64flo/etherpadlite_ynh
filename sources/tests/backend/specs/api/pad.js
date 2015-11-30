@@ -1,7 +1,8 @@
 var assert = require('assert')
  supertest = require(__dirname+'/../../../../src/node_modules/supertest'),
         fs = require('fs'),
-       api = supertest('http://localhost:9001');
+  settings = require(__dirname+'/../../loadSettings').loadSettings(),
+       api = supertest('http://'+settings.ip+":"+settings.port),
       path = require('path'),
      async = require(__dirname+'/../../../../src/node_modules/async');
 
@@ -210,7 +211,7 @@ describe('getText', function(){
   it('gets the Pad text', function(done) {
     api.get(endPoint('getText')+"&padID="+testPadId)
     .expect(function(res){
-      if(res.body.data.text !== "testTextTwo") throw new Error("Setting Text")
+      if(res.body.data.text !== "testTextTwo\n") throw new Error("Setting Text")
     })
     .expect('Content-Type', /json/)
     .expect(200, done)
@@ -386,7 +387,30 @@ describe('getText', function(){
     api.get(endPoint('getText')+"&padID="+testPadId)
     .expect(function(res){
       if(res.body.code !== 0) throw new Error("Pad Get Text failed")
-      if(res.body.data.text !== text) throw new Error("Pad Text not set properly");
+      if(res.body.data.text !== text+"\n") throw new Error("Pad Text not set properly");
+    })
+    .expect('Content-Type', /json/)
+    .expect(200, done)
+  });
+})
+
+describe('setText', function(){
+  it('Sets text on a pad Id including an explicit newline', function(done) {
+    api.get(endPoint('setText')+"&padID="+testPadId+"&text="+text+'%0A')
+    .expect(function(res){
+      if(res.body.code !== 0) throw new Error("Pad Set Text failed")
+    })
+    .expect('Content-Type', /json/)
+    .expect(200, done)
+  });
+})
+
+describe('getText', function(){
+  it("Gets text on a pad Id and doesn't have an excess newline", function(done) {
+    api.get(endPoint('getText')+"&padID="+testPadId)
+    .expect(function(res){
+      if(res.body.code !== 0) throw new Error("Pad Get Text failed")
+      if(res.body.data.text !== text+"\n") throw new Error("Pad Text not set properly");
     })
     .expect('Content-Type', /json/)
     .expect(200, done)
@@ -419,7 +443,7 @@ describe('getText', function(){
   it('Gets text on a pad Id', function(done) {
     api.get(endPoint('getText')+"&padID="+newPadId)
     .expect(function(res){
-      if(res.body.data.text !== text) throw new Error("Pad Get Text failed")
+      if(res.body.data.text !== text+"\n") throw new Error("Pad Get Text failed")
     })
     .expect('Content-Type', /json/)
     .expect(200, done)
@@ -441,7 +465,7 @@ describe('getText', function(){
   it('Gets text on a pad Id', function(done) {
     api.get(endPoint('getText')+"&padID="+testPadId)
     .expect(function(res){
-      if(res.body.data.text !== text) throw new Error("Pad Get Text failed")
+      if(res.body.data.text !== text+"\n") throw new Error("Pad Get Text failed")
     })
     .expect('Content-Type', /json/)
     .expect(200, done)
@@ -464,7 +488,6 @@ describe('setHTML', function(){
     var html = "<div><b>Hello HTML</title></head></div>";
     api.get(endPoint('setHTML')+"&padID="+testPadId+"&html="+html)
     .expect(function(res){
-console.log(res.body.code);
       if(res.body.code !== 1) throw new Error("Allowing crappy HTML to be imported")
     })
     .expect('Content-Type', /json/)
